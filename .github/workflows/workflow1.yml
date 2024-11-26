@@ -1,0 +1,45 @@
+name: workflow 1
+ 
+on:
+  push:
+    branches:
+      - main
+ 
+jobs:
+  test:
+    runs-on: ubuntu-latest
+ 
+    services:
+      mongo:
+        image: mongo:latest
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd="mongosh --eval 'db.adminCommand({ ping: 1 })'" 
+          --health-interval=10s 
+          --health-timeout=5s 
+          --health-retries=5
+ 
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v3
+ 
+    - name: Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 16
+ 
+    - name: Install dependencies
+      run: npm install
+ 
+    - name: MongoDB
+      run: |
+        for i in {1..30}; do
+          nc -z localhost 27017 && echo "MongoDB" && exit 0
+          echo "MongoDB"
+          sleep 2
+        done
+        exit 1
+ 
+    - name: Run tests
+      run: npm test
